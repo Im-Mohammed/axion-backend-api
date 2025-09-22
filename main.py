@@ -33,7 +33,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=["https://axion-portfolio-ui-bqvq.vercel.app/"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -197,7 +197,7 @@ def log_user(data: User):
     ])
     wb.save(EXCEL_PATH)
 
-    return {"redirect": "http://localhost:5173"}
+    return {"redirect": "https://axion-portfolio-ui-bqvq.vercel.app/"}
 
 # Contact page outreach
 
@@ -264,12 +264,9 @@ def log_contact(name, email, github, linkedin, source="contact"):
 def send_daily_excel():
     try:
         if os.path.exists(EXCEL_PATH):
-            send_email(
-                to_email=EMAIL_USER,  # You can change this to a fixed recipient
-                file_path_or_text=EXCEL_PATH,
-                subject="Daily Visitor Log",
-                body="Attached is the latest visitor log from Mohammed’s assistant system."
-            )
+            subject = f"Daily Visitor Log - {datetime.now().strftime('%d %b %Y')}"
+            body = "Attached is the latest visitor log from Mohammed’s assistant system."
+            send_email(EMAIL_USER, EXCEL_PATH, subject, body)
             if DEBUG:
                 print("✅ Daily Excel sheet sent successfully.")
         else:
