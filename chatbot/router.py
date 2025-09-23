@@ -1,6 +1,6 @@
 # chatbot/router.py
 
-from fastapi import APIRouter
+from fastapi import APIRouter # type: ignore
 from pydantic import BaseModel
 from chatbot.ai_engine import get_ai_reply
 
