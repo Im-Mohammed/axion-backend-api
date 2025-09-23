@@ -33,7 +33,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://axion-portfolio-ui-bqvq.vercel.app/"],
+    allow_origins=["https://axion-portfolio-ui-bqvq.vercel.app/","*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -106,7 +106,7 @@ They are not currently hiring.
 Mohammed’s skills: {skills_str}
 Relevant projects: {project_lines}
 
-Write a warm, emotionally intelligent email that expresses admiration for the company’s work and invites future connection. Mention how Mohammed’s background aligns with their long-term vision. Make the email feel human—like it was written by someone who genuinely respects the recipient’s work. Use natural phrasing, subtle warmth, and a conversational tone. Keep it concise—no more than 4 short paragraphs.
+Write a warm, emotionally intelligent email that expresses admiration for the company’s work and invites future connection. Mention how Mohammed’s background aligns with their long-term vision. Make the email feel human—like it was written by someone who genuinely respects the recipient’s work. Use natural phrasing, subtle warmth, and a conversational tone. Keep it concise—no more than 3 short paragraphs.
 
 Return the subject and body separated by a newline.
 """
