@@ -1,83 +1,76 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from openpyxl import load_workbook, Workbook
 from dotenv import load_dotenv
 from datetime import datetime
 from uuid import uuid4
 import os
-import smtplib
-from email.message import EmailMessage
 import requests
+import resend
+from typing import List
 from chatbot.router import router as chatbot_router
-from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.triggers.cron import CronTrigger
 from contextlib import asynccontextmanager
-
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
 
 # Load environment variables
 load_dotenv()
 EMAIL_USER = os.getenv("EMAIL_USER")
-EMAIL_PASS = os.getenv("EMAIL_PASS")
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 AUTBOUND_API_KEY = os.getenv("AUTBOUND_API_KEY")
-GITHUB_TOKEN=os.getenv("GITHUB_TOKEN")
+GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
+RESEND_API_KEY = os.getenv("RESEND_API_KEY")
+RESEND_SENDER = os.getenv("RESEND_SENDER")
+RESUME_LINK = os.getenv("RESUME_LINK")
+GOOGLE_CREDS_PATH = os.getenv("GOOGLE_CREDS_PATH")
+SHEET_NAME = os.getenv("SHEET_NAME")
 DEBUG = True
-# Initialize FastAPI
+
+# Google Sheets setup
+scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+creds = ServiceAccountCredentials.from_json_keyfile_name(GOOGLE_CREDS_PATH, scope)
+gs_client = gspread.authorize(creds)
+sheet = gs_client.open(SHEET_NAME).sheet1
+
+# FastAPI setup
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup logic (if needed)
     yield
-    # Shutdown logic
-    scheduler.shutdown()
+
 app = FastAPI(lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://axion-portfolio-ui-bqvq.vercel.app/","*"],
+    allow_origins=["https://mohammed-karab.rest/", "*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 app.include_router(chatbot_router)
-# Excel setup
-
-EXCEL_PATH = "storage.xlsx"
-if not os.path.exists(EXCEL_PATH):
-    wb = Workbook()
-    sheet = wb.active
-    sheet.append([
-        "id", "name", "email", "userType", "company", "answers", "status", "role",
-        "timestamp", "subject", "body", "github", "linkedin", "source"
-    ])
-    wb.save(EXCEL_PATH)
 
 # Models
 class User(BaseModel):
     name: str
     email: str
-    userType: str  # "hr" or "visitor"
+    userType: str
     company: str = ""
     role: str = ""
-    answers: str = ""  # Role description or "Not hiring" response
+    answers: str = ""
 
 class ContactInfo(BaseModel):
     name: str
     github: str = ""
     linkedin: str = ""
 
-
-# Static skills and projects
+# Skills and projects
 skills_str = (
     "FastAPI, Django, DeepFace, OpenCV, Redis, Celery, GitHub API, LinkedIn API, "
     "Emotion Recognition, WebSockets, React, TailwindCSS, Firebase, JWT, Docker"
 )
-
 top_projects = [
     {"name": "MindSync", "description": "Emotion-adaptive learning platform using DeepFace, OpenCV, and Django"},
     {"name": "Autism Support System", "description": "Real-time gesture recognition and emergency alerts for neurodiverse users"},
     {"name": "Claims API", "description": "Scalable backend for healthcare claims using FastAPI, Redis, and Celery"}
 ]
-
 project_lines = "; ".join([f"{p['name']}: {p['description']}" for p in top_projects])
 
 # Prompt builders
@@ -117,12 +110,10 @@ def generate_email_from_prompt(prompt):
         "Authorization": f"Bearer {OPENROUTER_API_KEY}",
         "Content-Type": "application/json"
     }
-
     payload = {
         "model": "deepseek/deepseek-r1:free",
         "messages": [{"role": "user", "content": prompt}]
     }
-
     try:
         response = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=payload)
         result = response.json()
@@ -133,40 +124,32 @@ def generate_email_from_prompt(prompt):
         subject = subject_line.replace("Subject:", "").strip() if subject_line else "Let's stay connected"
         body_lines = [line for line in lines if not line.lower().startswith("subject:") and line.strip()]
         body = "\n".join(body_lines).strip()
-
-        return subject, body
-
+        resume_note = f"\n\nYou can view Mohammed’s resume here: {RESUME_LINK}"
+        return subject, body + resume_note
     except Exception as e:
         print("AI email generation failed:", e)
-        return "Let's stay connected", "Hi, thank you for reaching out. I’ve attached my resume so we can continue the conversation."
+        fallback_body = f"Hi, thank you for reaching out. You can view Mohammed’s resume here: {RESUME_LINK}"
+        return "Let's stay connected", fallback_body
 
-# Email utility
-def send_email(to_email, file_path_or_text, subject, body):
-    msg = EmailMessage()
-    msg["Subject"] = subject
-    msg["From"] = EMAIL_USER
-    msg["To"] = to_email
-    msg.set_content(body)
+# Resend email utility
+def send_email_resend(to_email, subject, body):
+    try:
+        resend.api_key = RESEND_API_KEY
+        params: List[resend.Emails.SendParams] = [{
+            "from": RESEND_SENDER,
+            "to": [to_email],
+            "subject": subject,
+            "html": f"<p>{body.replace(chr(10), '<br>')}</p>"
+        }]
+        resend.Batch.send(params)
+        if DEBUG:
+            print(f"✅ Email sent via Resend to {to_email}")
+    except Exception as e:
+        print(f"❌ Resend email failed:", e)
 
-    if os.path.exists(file_path_or_text):
-        with open(file_path_or_text, "rb") as f:
-            msg.add_attachment(
-                f.read(),
-                maintype="application",
-                subtype="octet-stream",
-                filename=os.path.basename(file_path_or_text)
-            )
-
-    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
-        smtp.login(EMAIL_USER, EMAIL_PASS)
-        smtp.send_message(msg)
-
-# Log user and respond
+# Log user
 @app.post("/log-visitor")
 def log_user(data: User):
-    wb = load_workbook(EXCEL_PATH)
-    sheet = wb.active
-
     user_id = str(uuid4())
     hiring = not data.answers.lower().startswith("not hiring")
 
@@ -175,14 +158,13 @@ def log_user(data: User):
             prompt = build_role_aware_prompt(data.name, data.role or "Hiring Manager", data.company, data.answers)
         else:
             prompt = build_future_opportunity_prompt(data.name, data.role or "Hiring Manager", data.company)
-
         subject, body = generate_email_from_prompt(prompt)
-        send_email(data.email, "resume.pdf", subject, body)
+        send_email_resend(data.email, subject, body)
     else:
         subject = ""
         body = ""
 
-    sheet.append([
+    sheet.append_row([
         user_id,
         data.name,
         data.email,
@@ -193,88 +175,62 @@ def log_user(data: User):
         data.role,
         datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         subject,
-        body
+        body,
+        "", "", "portfolio"
     ])
-    wb.save(EXCEL_PATH)
+    send_daily_sheet_link()
+    return {"redirect": "https://mohammed-karab.rest/"}
 
-    return {"redirect": "https://axion-portfolio-ui-bqvq.vercel.app/"}
-
-# Contact page outreach
-
-# 🔍 Retrieve latest email from Excel# 🔍 Retrieve latest email from Excel
-def get_latest_email():
-    wb = load_workbook(EXCEL_PATH)
-    sheet = wb.active
-    for row in reversed(list(sheet.iter_rows(values_only=True))):
-        email = row[2] if len(row) >= 3 else None
-        name = row[1] if len(row) >= 2 else None
-        if email and "@" in email and not email.lower().startswith("string"):
-            print("✅ Found fallback email:", email)
-            return email, name
-    print("❌ No valid fallback email found")
-    return None, None
-
-# 📧 Send intro email
-def send_email_contact(to_email, subject, body):
+# Get latest email
+def get_latest_email_from_sheet():
     try:
-        msg = EmailMessage()
-        msg["Subject"] = subject
-        msg["From"] = EMAIL_USER
-        msg["To"] = to_email
-        msg.set_content(body)
+        rows = sheet.get_all_records()
+        for row in reversed(rows):
+            email = row.get("email", "")
+            name = row.get("name", "")
+            if email and "@" in email and not email.lower().startswith("string"):
+                print("✅ Found fallback email:", email)
+                return email, name
+        print("❌ No valid fallback email found")
+        return None, None
+    except Exception as e:
+        print("❌ Sheet read error:", e)
+        return None, None
 
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
-            smtp.login(EMAIL_USER, EMAIL_PASS)
-            smtp.send_message(msg)
+# Log contact
+def log_contact_to_sheet(name, email, github, linkedin, source="contact"):
+    try:
+        rows = sheet.get_all_records()
+        updated = False
+        for i, row in enumerate(rows, start=2):
+            if row.get("email") == email:
+                sheet.update_cell(i, 12, f"https://github.com/{github}" if github else row.get("github", ""))
+                sheet.update_cell(i, 13, f"https://linkedin.com/in/{linkedin}" if linkedin else row.get("linkedin", ""))
+                sheet.update_cell(i, 9, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+                sheet.update_cell(i, 14, source)
+                updated = True
+                break
+        if not updated:
+            sheet.append_row([
+                str(uuid4()), name, email, "", "", "", "", "", datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "", "", f"https://github.com/{github}" if github else "",
+                f"https://linkedin.com/in/{linkedin}" if linkedin else "", source
+            ])
+    except Exception as e:
+        print("❌ Sheet write error:", e)
 
+# Send sheet link
+def send_daily_sheet_link():
+    try:
+        sheet_url = f"https://docs.google.com/spreadsheets/d/{sheet.spreadsheet.id}"
+        subject = f"Daily Visitor Log - {datetime.now().strftime('%d %b %Y')}"
+        body = f"Here’s the latest visitor log: {sheet_url}"
+        send_email_resend(EMAIL_USER, subject, body)
         if DEBUG:
-            print(f"✅ Email sent to {to_email}")
+            print("✅ Sheet link sent successfully.")
     except Exception as e:
-        print(f"❌ Email sending failed:", e)
+        print("❌ Failed to send sheet link:", e)
 
-# 📊 Log contact to Excel
-def log_contact(name, email, github, linkedin, source="contact"):
-    wb = load_workbook(EXCEL_PATH)
-    sheet = wb.active
-    updated = False
-    EXPECTED_COLUMNS = 15
-
-    for row in sheet.iter_rows(min_row=2):
-        if len(row) >= 3 and row[2].value == email:
-            row_index = row[0].row
-            sheet.cell(row=row_index, column=13).value = f"https://github.com/{github}" if github else sheet.cell(row=row_index, column=13).value
-            sheet.cell(row=row_index, column=14).value = f"https://linkedin.com/in/{linkedin}" if linkedin else sheet.cell(row=row_index, column=14).value
-            sheet.cell(row=row_index, column=10).value = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            sheet.cell(row=row_index, column=15).value = source
-            updated = True
-            break
-
-    if not updated:
-        new_row = [""] * EXPECTED_COLUMNS
-        new_row[1] = name
-        new_row[2] = email
-        new_row[8] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        new_row[11] = f"https://github.com/{github}" if github else ""
-        new_row[12] = f"https://linkedin.com/in/{linkedin}" if linkedin else ""
-        new_row[14] = source
-        sheet.append(new_row)
-
-    wb.save(EXCEL_PATH)
-
-def send_daily_excel():
-    try:
-        if os.path.exists(EXCEL_PATH):
-            subject = f"Daily Visitor Log - {datetime.now().strftime('%d %b %Y')}"
-            body = "Attached is the latest visitor log from Mohammed’s assistant system."
-            send_email(EMAIL_USER, EXCEL_PATH, subject, body)
-            if DEBUG:
-                print("✅ Daily Excel sheet sent successfully.")
-        else:
-            print("❌ Excel file not found.")
-    except Exception as e:
-        print("❌ Failed to send daily Excel:", e)
-
-# 🐙 GitHub follow
 def follow_on_github(username):
     if not username:
         return
@@ -291,8 +247,6 @@ def follow_on_github(username):
             print(f"❌ GitHub follow failed: {response.status_code} - {response.text}")
     except Exception as e:
         print(f"❌ GitHub follow error:", e)
-
-# 🔗 LinkedIn outreach
 def connect_on_linkedin(name, email):
     if not name:
         return
@@ -311,40 +265,33 @@ def connect_on_linkedin(name, email):
         print(f"✅ LinkedIn outreach triggered for {name}")
     except Exception as e:
         print(f"❌ LinkedIn outreach failed:", e)
-
-# 🚀 Main contact endpoint
 @app.post("/contact-outreach")
 def contact_outreach(info: ContactInfo):
     name = info.name.strip()
     github = info.github.strip()
     linkedin = info.linkedin.strip()
 
-    # 📨 Always extract latest email from Excel
-    email, name_from_excel = get_latest_email()
+    email, name_from_sheet = get_latest_email_from_sheet()
     if not email:
-        print("❌ No valid email found in Excel")
+        print("❌ No valid email found in sheet")
         return {"status": "failed", "reason": "No email available"}
     if not name or name.lower() == "string":
-        name = name_from_excel or "Visitor"
+        name = name_from_sheet or "Visitor"
 
-    # 📊 Log contact
-    log_contact(name, email, github, linkedin)
+    log_contact_to_sheet(name, email, github, linkedin)
 
-    # 📨 Send intro email
     email_sent = False
     if not github and not linkedin:
         subject = "Excited to connect!"
-        body = f"Hi {name}, thanks for reaching out! Mohammed’s portfolio is designed to engage, adapt, and respond with clarity and purpose. Whether you're exploring his work or looking to collaborate, you're always welcome here. Let’s stay connected."
-        send_email_contact(email, subject, body)
+        body = f"Hi {name}, thanks for reaching out! Mohammed’s portfolio is designed to engage, adapt, and respond with clarity and purpose. Whether you're exploring his work or looking to collaborate, you're always welcome here.\n\nYou can view Mohammed’s resume here: {RESUME_LINK}"
+        send_email_resend(email, subject, body)
         email_sent = True
 
-    # 🐙 GitHub follow
     github_followed = False
     if github:
         follow_on_github(github)
         github_followed = True
 
-    # 🔗 LinkedIn connect
     linkedin_connected = False
     if linkedin:
         connect_on_linkedin(name, email)
@@ -362,10 +309,3 @@ def contact_outreach(info: ContactInfo):
         "github_followed": github_followed,
         "linkedin_connected": linkedin_connected
     }
-scheduler = BackgroundScheduler()
-scheduler.add_job(send_daily_excel, CronTrigger(hour=8, minute=0))  # Sends daily at 8:00 AM
-scheduler.start()
-
-@app.on_event("shutdown")
-def shutdown_event():
-    scheduler.shutdown()
