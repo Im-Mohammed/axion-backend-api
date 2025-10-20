@@ -62,16 +62,64 @@ class ContactInfo(BaseModel):
     linkedin: str = ""
 
 # Skills and projects
-skills_str = (
-    "FastAPI, Django, DeepFace, OpenCV, Redis, Celery, GitHub API, LinkedIn API, "
-    "Emotion Recognition, WebSockets, React, TailwindCSS, Firebase, JWT, Docker"
-)
-top_projects = [
-    {"name": "MindSync", "description": "Emotion-adaptive learning platform using DeepFace, OpenCV, and Django"},
-    {"name": "Autism Support System", "description": "Real-time gesture recognition and emergency alerts for neurodiverse users"},
-    {"name": "Claims API", "description": "Scalable backend for healthcare claims using FastAPI, Redis, and Celery"}
-]
-project_lines = "; ".join([f"{p['name']}: {p['description']}" for p in top_projects])
+# skills_str = (
+#     "FastAPI, Django, DeepFace, OpenCV, Redis, Celery, GitHub API, LinkedIn API, "
+#     "Emotion Recognition, WebSockets, React, TailwindCSS, Firebase, JWT, Docker"
+# )
+# top_projects = [
+#     {"name": "MindSync", "description": "Emotion-adaptive learning platform using DeepFace, OpenCV, and Django"},
+#     {"name": "Autism Support System", "description": "Real-time gesture recognition and emergency alerts for neurodiverse users"},
+#     {"name": "Claims API", "description": "Scalable backend for healthcare claims using FastAPI, Redis, and Celery"}
+# ]
+PORTFOLIO_OVERVIEW = {
+    "Skills": {
+        "Languages": ["Python", "JavaScript", "Java", "C++", "C", "R", "Bash"],
+        "Frontend": ["HTML", "CSS", "Bootstrap", "React"],
+        "Backend & DevOps": ["Linux", "Git", "Docker", "Jenkins", "n8n", "Postman", "Heroku", "AWS", "Networking"],
+        "Cloud & Deployment": ["GCP", "Render", "Vercel", "GitHub", "InfinityFree"],
+        "Security Tools": ["Nmap", "Hydra", "John The Ripper", "Metasploit", "Burp Suite", "Wireshark", "Kali Linux", "Parrot OS"],
+        "Libraries": ["TensorFlow", "PyTorch", "OpenCV", "NumPy", "Pandas", "LangChain", "LangGraph", "LangSmith", "FastAPI", "Django"]
+    },
+    "Projects": [
+        {"name": "AI-Chemist", "summary": "Tablet Recognition using Gemini Vision API and Streamlit"},
+        {"name": "Healthcare Claims API", "summary": "RESTful API for medical data using Python"},
+        {"name": "Pneumonia Detection Model", "summary": "CNN-based X-ray classification for pneumonia detection"},
+        {"name": "WebscrapeModel", "summary": "Django + BeautifulSoup scraper with Excel export"},
+        {"name": "Autism Support System", "summary": "Real-time emotion recognition using ML and OpenCV"},
+        {"name": "Mind-Sync", "summary": "Emotion AI and adaptive learning using TensorFlow"}
+    ],
+    "Achievements": [
+        "CCNA Certifications", "Cybersecurity Essentials", "Gen AI Apps", "Prompt Design", "IBM Cybersecurity", "LeetCode 50 Days"
+    ],
+    "Contact": [
+        {"GitHub": "https://github.com/Im-Mohammed"},
+        {"LinkedIn": "https://www.linkedin.com/in/mohammed-karab-ehtesham-469b83366/"},
+        {"Email": "mohammedkarabehtesham@gmail.com"}
+    ],
+    "Publications": [
+        {"title": "Autism Support System", "source": "IJCRT"},
+        {"title": "Amazon Sales Analysis", "source": "IJIRCCE"},
+        {"title": "LLMs From Basics to Practical Understanding", "source": "Medium"},
+        {"title": "Dutch National Flag Algorithm", "source": "Medium"}
+    ]
+}
+
+skills_str = "; ".join([
+    f"{category}: {', '.join(tools)}"
+    for category, tools in PORTFOLIO_OVERVIEW["Skills"].items()
+])
+
+project_lines = "; ".join([
+    f"{p['name']}: {p['summary']}"
+    for p in PORTFOLIO_OVERVIEW["Projects"]
+])
+achievements_str = ", ".join(PORTFOLIO_OVERVIEW["Achievements"])
+
+publications_str = "; ".join([
+    f"{pub['title']} ({pub['source']})"
+    for pub in PORTFOLIO_OVERVIEW["Publications"]
+])
+
 
 # Prompt builders
 def build_role_aware_prompt(name, role, company, role_description):
@@ -83,6 +131,8 @@ They are hiring for: "{role_description}"
 
 Mohammed’s skills: {skills_str}
 Relevant projects: {project_lines}
+Achievements: {achievements_str}
+Publications: {publications_str}
 
 Write a concise, emotionally intelligent email that compares Mohammed’s background to the role description. Highlight relevant skills and projects naturally. Mention the company name. Make the email feel human—like it was written by someone who genuinely admires the recipient’s work. Use natural phrasing, subtle warmth, and a conversational tone. Keep it concise—no more than 3 short paragraphs.
 
@@ -98,6 +148,8 @@ They are not currently hiring.
 
 Mohammed’s skills: {skills_str}
 Relevant projects: {project_lines}
+Achievements: {achievements_str}
+Publications: {publications_str}
 
 Write a warm, emotionally intelligent email that expresses admiration for the company’s work and invites future connection. Mention how Mohammed’s background aligns with their long-term vision. Make the email feel human—like it was written by someone who genuinely respects the recipient’s work. Use natural phrasing, subtle warmth, and a conversational tone. Keep it concise—no more than 3 short paragraphs.
 
