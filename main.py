@@ -40,7 +40,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://mohammed-karab.rest/", "*"],
+    allow_origins=["https://www.mohammed-karab.rest"],  
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -61,16 +61,6 @@ class ContactInfo(BaseModel):
     github: str = ""
     linkedin: str = ""
 
-# Skills and projects
-# skills_str = (
-#     "FastAPI, Django, DeepFace, OpenCV, Redis, Celery, GitHub API, LinkedIn API, "
-#     "Emotion Recognition, WebSockets, React, TailwindCSS, Firebase, JWT, Docker"
-# )
-# top_projects = [
-#     {"name": "MindSync", "description": "Emotion-adaptive learning platform using DeepFace, OpenCV, and Django"},
-#     {"name": "Autism Support System", "description": "Real-time gesture recognition and emergency alerts for neurodiverse users"},
-#     {"name": "Claims API", "description": "Scalable backend for healthcare claims using FastAPI, Redis, and Celery"}
-# ]
 PORTFOLIO_OVERVIEW = {
     "Skills": {
         "Languages": ["Python", "JavaScript", "Java", "C++", "C", "R", "Bash"],
@@ -211,7 +201,6 @@ def log_user(data: User):
         else:
             prompt = build_future_opportunity_prompt(data.name, data.role or "Hiring Manager", data.company)
         subject, body = generate_email_from_prompt(prompt)
-        send_email_resend(data.email, subject, body)
     else:
         subject = ""
         body = ""
@@ -230,7 +219,6 @@ def log_user(data: User):
         body,
         "", "", "portfolio"
     ])
-    send_daily_sheet_link()
     return {"redirect": "https://mohammed-karab.rest/"}
 
 # Get latest email
@@ -271,17 +259,17 @@ def log_contact_to_sheet(name, email, github, linkedin, source="contact"):
     except Exception as e:
         print("❌ Sheet write error:", e)
 
-# Send sheet link
-def send_daily_sheet_link():
-    try:
-        sheet_url = f"https://docs.google.com/spreadsheets/d/{sheet.spreadsheet.id}"
-        subject = f"Daily Visitor Log - {datetime.now().strftime('%d %b %Y')}"
-        body = f"Here’s the latest visitor log: {sheet_url}"
-        send_email_resend(EMAIL_USER, subject, body)
-        if DEBUG:
-            print("✅ Sheet link sent successfully.")
-    except Exception as e:
-        print("❌ Failed to send sheet link:", e)
+# # Send sheet link
+# def send_daily_sheet_link():
+#     try:
+#         sheet_url = f"https://docs.google.com/spreadsheets/d/{sheet.spreadsheet.id}"
+#         subject = f"Daily Visitor Log - {datetime.now().strftime('%d %b %Y')}"
+#         body = f"Here’s the latest visitor log: {sheet_url}"
+#         send_email_resend(EMAIL_USER, subject, body)
+#         if DEBUG:
+#             print("✅ Sheet link sent successfully.")
+#     except Exception as e:
+#         print("❌ Failed to send sheet link:", e)
 
 def follow_on_github(username):
     if not username:
