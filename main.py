@@ -55,6 +55,7 @@ class User(BaseModel):
     company: str = ""
     role: str = ""
     answers: str = ""
+    isHiring: bool
 
 class ContactInfo(BaseModel):
     name: str
@@ -114,64 +115,127 @@ publications_str = "; ".join([
 # Prompt builders
 def build_role_aware_prompt(name, role, company, role_description):
     return f"""
-You are a professional assistant writing on behalf of Mohammed Karab Ehtesham.
+Write a short, warm email from Mohammed Karab Ehtesham to {name}, a {role} at {company}, who is hiring for: "{role_description}".
 
-The recipient is {name}, a {role} at {company}.
-They are hiring for: "{role_description}"
+Mohammed’s background includes:
+- Skills: {skills_str}
+- Projects: {project_lines}
+- Achievements: {achievements_str}
+- Publications: {publications_str}
 
-Mohammed’s skills: {skills_str}
-Relevant projects: {project_lines}
-Achievements: {achievements_str}
-Publications: {publications_str}
-
-Write a concise, emotionally intelligent email that compares Mohammed’s background to the role description. Highlight relevant skills and projects naturally. Mention the company name. Make the email feel human—like it was written by someone who genuinely admires the recipient’s work. Use natural phrasing, subtle warmth, and a conversational tone. Keep it concise—no more than 3 short paragraphs.
-
-Return the subject and body separated by a newline.
+The email should:
+- Be in first person, from Mohammed
+- Mention the company name naturally
+- Compare his background to the role
+- Highlight relevant skills and projects
+- Use a conversational, respectful tone (no “Dear” or formal phrasing)
+- Be under 200 words, in 3 short paragraphs
+- Return only the subject line (starting with “Subject:”) followed by a newline, then the email body
+- No headings, markdown, or multiple versions
 """
+
 
 def build_future_opportunity_prompt(name, role, company):
     return f"""
-You are a professional assistant writing on behalf of Mohammed Karab Ehtesham.
+Write a short, warm email from Mohammed Karab Ehtesham to {name}, a {role} at {company}, who is not currently hiring.
 
-The recipient is {name}, a {role} at {company}.
-They are not currently hiring.
+Mohammed’s background:
+- Skills: {skills_str}
+- Projects: {project_lines}
+- Achievements: {achievements_str}
+- Publications: {publications_str}
 
-Mohammed’s skills: {skills_str}
-Relevant projects: {project_lines}
-Achievements: {achievements_str}
-Publications: {publications_str}
-
-Write a warm, emotionally intelligent email that expresses admiration for the company’s work and invites future connection. Mention how Mohammed’s background aligns with their long-term vision. Make the email feel human—like it was written by someone who genuinely respects the recipient’s work. Use natural phrasing, subtle warmth, and a conversational tone. Keep it concise—no more than 3 short paragraphs.
-
-Return the subject and body separated by a newline.
+The email should:
+- Express admiration for the company’s work
+- Invite future connection and express interest in being considered for future opportunities
+- Show how Mohammed’s background aligns with their long-term vision
+- Use a conversational, respectful tone (no “Dear” or formal phrasing)
+- Be under 150 words, in 2 short paragraphs
+- Return only the subject line (starting with “Subject:”) followed by a newline, then the email body
+- No headings, markdown, or multiple versions
 """
 
+
 # Email generation
+# def generate_email_from_prompt(prompt):
+#     headers = {
+#         "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+#         "Content-Type": "application/json"
+#     }
+#     payload = {
+#         "model": "deepseek/deepseek-r1:free",
+#         "messages": [{"role": "user", "content": prompt}]
+#     }
+
+#     try:
+#         response = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=payload)
+#         result = response.json()
+
+#         print("OpenRouter raw response:", response.text)  # ✅ Debug log
+#         print("Prompt sent to OpenRouter:", prompt)       # ✅ Debug log
+
+#         if "choices" not in result or not result["choices"]:
+#             raise ValueError("No choices returned from OpenRouter")
+
+#         content = result["choices"][0]["message"]["content"]
+#         lines = content.strip().split("\n")
+#         subject_line = next((line for line in lines if line.lower().startswith("subject:")), None)
+#         subject = subject_line.replace("Subject:", "").strip() if subject_line else "Let's stay connected"
+#         body_lines = [line for line in lines if not line.lower().startswith("subject:") and line.strip()]
+#         body = "\n".join(body_lines).strip()
+#         resume_note = f"\n\nYou can view Mohammed’s resume here: {RESUME_LINK}"
+#         return subject, body + resume_note
+
+#     except Exception as e:
+#         print("AI email generation failed:", e)
+#         fallback_body = f"Hi, thank you for reaching out. You can view Mohammed’s resume here: {RESUME_LINK}"
+#         return "Let's stay connected", fallback_body
 def generate_email_from_prompt(prompt):
     headers = {
         "Authorization": f"Bearer {OPENROUTER_API_KEY}",
         "Content-Type": "application/json"
     }
-    payload = {
-        "model": "deepseek/deepseek-r1:free",
-        "messages": [{"role": "user", "content": prompt}]
-    }
-    try:
-        response = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=payload)
-        result = response.json()
-        content = result["choices"][0]["message"]["content"]
 
-        lines = content.strip().split("\n")
-        subject_line = next((line for line in lines if line.lower().startswith("subject:")), None)
-        subject = subject_line.replace("Subject:", "").strip() if subject_line else "Let's stay connected"
-        body_lines = [line for line in lines if not line.lower().startswith("subject:") and line.strip()]
-        body = "\n".join(body_lines).strip()
-        resume_note = f"\n\nYou can view Mohammed’s resume here: {RESUME_LINK}"
-        return subject, body + resume_note
-    except Exception as e:
-        print("AI email generation failed:", e)
-        fallback_body = f"Hi, thank you for reaching out. You can view Mohammed’s resume here: {RESUME_LINK}"
-        return "Let's stay connected", fallback_body
+    MODEL_PRIORITY = [
+        "nvidia/nemotron-nano-9b-v2:free",
+        "tngtech/deepseek-r1t2-chimera:free",
+        "google/gemma-3n-e2b-it:free"
+    ]
+
+    for model_name in MODEL_PRIORITY:
+        payload = {
+            "model": model_name,
+            "messages": [{"role": "user", "content": prompt}]
+        }
+
+        try:
+            response = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=payload)
+            result = response.json()
+
+            print(f"🔄 Trying model: {model_name}")
+            print("OpenRouter raw response:", response.text)
+
+            if "choices" not in result or not result["choices"]:
+                raise ValueError(f"No choices returned from {model_name}")
+
+            content = result["choices"][0]["message"]["content"]
+            lines = content.strip().split("\n")
+            subject_line = next((line for line in lines if line.lower().startswith("subject:")), None)
+            subject = subject_line.replace("Subject:", "").strip() if subject_line else "Let's stay connected"
+            body_lines = [line for line in lines if not line.lower().startswith("subject:") and line.strip()]
+            body = "\n".join(body_lines).strip()
+            resume_note = f"\n\nYou can view Mohammed’s resume here: {RESUME_LINK}"
+            print(f"✅ Email generated using {model_name}")
+            return subject, body + resume_note , model_name
+
+        except Exception as e:
+            print(f"⚠️ Model {model_name} failed:", e)
+
+    # Final fallback
+    print("❌ All models failed. Using default fallback.")
+    fallback_body = f"Hi, thank you for reaching out. You can view Mohammed’s resume here: {RESUME_LINK}"
+    return "Let's stay connected", fallback_body
+
 
 # Resend email utility
 def send_email_resend(to_email, subject, body):
@@ -193,14 +257,15 @@ def send_email_resend(to_email, subject, body):
 @app.post("/log-visitor")
 def log_user(data: User):
     user_id = str(uuid4())
-    hiring = not data.answers.lower().startswith("not hiring")
+    hiring = data.isHiring
 
     if data.userType == "hr":
         if hiring:
             prompt = build_role_aware_prompt(data.name, data.role or "Hiring Manager", data.company, data.answers)
         else:
             prompt = build_future_opportunity_prompt(data.name, data.role or "Hiring Manager", data.company)
-        subject, body = generate_email_from_prompt(prompt)
+        subject, body, model_used = generate_email_from_prompt(prompt)
+        send_email_resend(data.email, subject, body)
     else:
         subject = ""
         body = ""
@@ -217,7 +282,7 @@ def log_user(data: User):
         datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         subject,
         body,
-        "", "", "portfolio"
+        model_used, "", "portfolio"
     ])
     return {"redirect": "https://mohammed-karab.rest/"}
 
