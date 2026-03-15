@@ -12,7 +12,7 @@ from chatbot.router import router as chatbot_router
 from contextlib import asynccontextmanager
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-
+from typing import Optional
 # Load environment variables
 load_dotenv()
 EMAIL_USER = os.getenv("EMAIL_USER")
@@ -55,7 +55,7 @@ class User(BaseModel):
     company: str = ""
     role: str = ""
     answers: str = ""
-    isHiring: bool
+    isHiring: Optional[bool] = None
 
 class ContactInfo(BaseModel):
     name: str
@@ -258,7 +258,7 @@ def send_email_resend(to_email, subject, body):
 def log_user(data: User):
     user_id = str(uuid4())
     hiring = data.isHiring
-
+    model_used = ""
     if data.userType == "hr":
         if hiring:
             prompt = build_role_aware_prompt(data.name, data.role or "Hiring Manager", data.company, data.answers)
@@ -271,18 +271,21 @@ def log_user(data: User):
         body = ""
 
     sheet.append_row([
-        user_id,
-        data.name,
-        data.email,
-        data.userType,
-        data.company,
-        data.answers,
-        f"{data.userType.capitalize()} Logged",
-        data.role,
-        datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        subject,
-        body,
-        model_used, "", "portfolio"
+    user_id,
+    data.name,
+    data.email,
+    data.userType,
+    data.company,
+    data.answers,
+    f"{data.userType.capitalize()} Logged",
+    data.role,
+    datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+    subject,
+    body,
+    "",  # github
+    "",  # linkedin
+    model_used,
+    "portfolio"  # source
     ])
     return {"redirect": "https://mohammed-karab.rest/"}
 
