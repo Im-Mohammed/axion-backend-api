@@ -1,6 +1,6 @@
 import os
 import requests
-from chatbot.context import inject_portfolio_context
+from backend.app.chatbot.context import inject_portfolio_context
 
 def get_ai_reply(user_message: str) -> str:
     prompt = inject_portfolio_context(user_message)
