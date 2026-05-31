@@ -35,6 +35,7 @@ from fastapi.responses import JSONResponse
 from app.services.sheets import init_sheets
 from app.settings.config import get_settings
 from app.utils.rate_limiter import RateLimiter
+from app.router.portfolio_router import router as portfolio_router
 
 # ── Logging ────────────────────────────────────────────────────────────────
 logging.basicConfig(
@@ -132,7 +133,7 @@ from app.router.log_router import router as log_router
 app.include_router(chatbot_router)
 app.include_router(admin_router)
 app.include_router(log_router)
-
+app.include_router(portfolio_router)
 
 # ── Routes ─────────────────────────────────────────────────────────────────
 @app.get("/health")
