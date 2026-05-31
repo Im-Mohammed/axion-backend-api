@@ -1,0 +1,9 @@
+# backend/.dockerignore
+app/.env
+*.env
+service_account.json
+__pycache__
+*.pyc
+*.pyo
+.git
+logs/

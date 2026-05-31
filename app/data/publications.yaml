@@ -1,0 +1,23 @@
+- id: "1"
+  image: /certificates/IJCRT.png
+  title: Autism Support System
+  subtitle: Published in IJCRT
+  url: https://ijcrt.org/papers/IJCRT2407342.pdf
+
+- id: "2"
+  image: /certificates/IJIRCCE.png
+  title: Amazon Sales Analysis
+  subtitle: Published via IJIRCCE
+  url: /certificates/cyber-cert.pdf
+
+- id: "3"
+  image: /certificates/LLM.jpeg
+  title: LLMs From Basics to Practical Understanding
+  subtitle: Medium Article
+  url: https://medium.com/@Im-Mohammed/large-language-models-llms-from-basics-to-practical-understanding-a171a02ba2f1
+
+- id: "4"
+  image: /certificates/Dutch.png
+  title: Dutch National Flag Algorithm
+  subtitle: Medium Article
+  url: https://medium.com/@Im-Mohammed/dutch-national-flag-problem-e7b0f7cb488b
