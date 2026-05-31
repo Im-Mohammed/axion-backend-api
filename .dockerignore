@@ -7,3 +7,4 @@ __pycache__
 *.pyo
 .git
 logs/
+generate_admin_hash_value.py
