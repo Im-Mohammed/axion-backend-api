@@ -95,6 +95,24 @@ class Settings(BaseSettings):
         default=["mohammed-karab.rest", "www.mohammed-karab.rest", "localhost"],
         validation_alias="ALLOWED_HOSTS",
     )
+
+    @field_validator("allowed_origins", "allowed_hosts", mode="before")
+    @classmethod
+    def parse_list(cls, v: str | list) -> list:
+        if isinstance(v, list):
+            return v
+        if isinstance(v, str):
+            # Handle JSON array format: '["a","b"]'
+            if v.strip().startswith("["):
+                import json
+                try:
+                    return json.loads(v)
+                except Exception:
+                    pass
+            # Handle comma-separated format: "a,b,c"
+            return [item.strip() for item in v.split(",") if item.strip()]
+        return v
+    
     resume_link: str = Field(
         default="",
         validation_alias="RESUME_LINK",
