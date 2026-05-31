@@ -93,10 +93,9 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.allowed_origins,
     allow_credentials=True,
-    allow_methods=["GET", "POST"],
-    allow_headers=["Content-Type", "Authorization"],
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
-
 app.add_middleware(
     TrustedHostMiddleware,
     allowed_hosts=settings.allowed_hosts,
