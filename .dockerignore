@@ -8,3 +8,5 @@ __pycache__
 .git
 logs/
 generate_admin_hash_value.py
+deployauto.bat
+deployauto.sh

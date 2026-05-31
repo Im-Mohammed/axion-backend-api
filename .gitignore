@@ -4,3 +4,5 @@ storage.xlsx
 .env
 service_account.json
 generate_admin_hash_value.py
+deployauto.bat
+deployauto.sh
