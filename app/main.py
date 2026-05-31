@@ -139,3 +139,10 @@ app.include_router(portfolio_router)
 @app.get("/health")
 def health_check():
     return {"status": "ok", "timestamp": datetime.now().isoformat()}
+
+@app.get("/debug-cors")
+def debug_cors():
+    return {
+        "allowed_origins": settings.allowed_origins,
+        "allowed_hosts":   settings.allowed_hosts,
+    }
