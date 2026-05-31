@@ -41,6 +41,31 @@ def _get_client_ip(request: Request) -> str:
         return request.client.host
     return "unknown"
 
+# Add this helper function above the route
+def _generate_and_send_email(
+    name: str,
+    role: str,
+    company: str,
+    answers: str,
+    is_hiring: bool,
+    email: str,
+):
+    """
+    Runs entirely in background after response is sent.
+    Generates AI email and delivers it — user never waits for this.
+    """
+    from app.services.email import generate_email_from_prompt, _send
+    from app.services.portfolio import build_role_aware_prompt, build_future_opportunity_prompt
+
+    prompt = (
+        build_role_aware_prompt(name, role, company, answers)
+        if is_hiring
+        else build_future_opportunity_prompt(name, role, company)
+    )
+    subject, body, model_used = generate_email_from_prompt(prompt)
+    _send(email, subject, body)
+    logger.info(f"Background email sent to {email} via {model_used}")
+    return subject, body, model_used
 
 # ── Routes ─────────────────────────────────────────────────────────────────
 @router.post("/log-visitor")
@@ -58,64 +83,58 @@ def log_visitor(
             detail="Too many email requests. Please wait 10 minutes before trying again.",
         )
 
-    user_id    = str(uuid4())
-    model_used = ""
-    subject    = ""
-    body       = ""
+    user_id = str(uuid4())
+    ip      = _get_client_ip(request)
 
-    if data.userType == "hr":
-        prompt = (
-            build_role_aware_prompt(
-                data.name,
-                data.role or "Hiring Manager",
-                data.company,
-                data.answers,
-            )
-            if data.isHiring
-            else build_future_opportunity_prompt(
-                data.name,
-                data.role or "Hiring Manager",
-                data.company,
-            )
-        )
-        subject, body, model_used = generate_email_from_prompt(prompt)
-        send_email_background(background_tasks, data.email, subject, body)
-
+    # Build the row with empty subject/body/model — they get filled in background
     row = [
-        user_id, data.name, data.email, data.userType,
-        data.company, data.answers,
+        user_id,
+        data.name,
+        data.email,
+        data.userType,
+        data.company,
+        data.answers,
         f"{data.userType.capitalize()} Logged",
         data.role,
         datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        subject, body, "", "", model_used, "portfolio", ip,
+        "",   # subject  — filled by background task
+        "",   # body     — filled by background task
+        "",   # github
+        "",   # linkedin
+        "",   # model_used — filled by background task
+        "portfolio",
+        ip,
     ]
 
-    # ── Write to Excel ─────────────────────────────────────────────────
-    # May fail on Render (read-only filesystem) — Sheets is the fallback
+    # Log visitor row immediately
     def _write_excel(r: list):
         try:
             excel.append_visitor(r)
             logger.info(f"Excel write succeeded for {data.email}")
         except Exception as e:
-            logger.warning(
-                f"Excel write failed for {data.email} — "
-                f"data is safe in Google Sheets. Error: {e}"
-            )
+            logger.warning(f"Excel write failed — Sheets is fallback. Error: {e}")
 
-    # ── Write to Google Sheets ─────────────────────────────────────────
-    # Primary store on Render — always attempted regardless of Excel result
     def _write_sheets(r: list):
         try:
             sheet_append(r)
             logger.info(f"Sheets write succeeded for {data.email}")
         except Exception as e:
-            logger.error(
-                f"Sheets write failed for {data.email} — "
-                f"check Google credentials. Error: {e}"
-            )
+            logger.error(f"Sheets write failed. Error: {e}")
 
     background_tasks.add_task(_write_excel, row)
     background_tasks.add_task(_write_sheets, row)
+
+    # Queue email generation + delivery as background task — never blocks response
+    if data.userType == "hr":
+        background_tasks.add_task(
+            _generate_and_send_email,
+            data.name,
+            data.role or "Hiring Manager",
+            data.company,
+            data.answers,
+            data.isHiring or False,
+            data.email,
+        )
 
     logger.info(f"Visitor logged: {data.email} ({data.userType}) from {ip}")
     return {"status": "ok", "userType": data.userType}
