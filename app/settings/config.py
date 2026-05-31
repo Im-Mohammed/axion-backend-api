@@ -87,36 +87,29 @@ class Settings(BaseSettings):
         default="production",
         validation_alias="ENVIRONMENT",
     )
-    allowed_origins: List[str] = Field(
-        default=["https://www.mohammed-karab.rest"],
+
+# New — store as plain string, expose as list via property
+    allowed_origins_raw: str = Field(
+        default="https://www.mohammed-karab.rest",
         validation_alias="ALLOWED_ORIGINS",
     )
-    allowed_hosts: List[str] = Field(
-        default=["mohammed-karab.rest", "www.mohammed-karab.rest", "localhost"],
+    allowed_hosts_raw: str = Field(
+        default="mohammed-karab.rest,www.mohammed-karab.rest,localhost",
         validation_alias="ALLOWED_HOSTS",
     )
 
-    @field_validator("allowed_origins", "allowed_hosts", mode="before")
-    @classmethod
-    def parse_list(cls, v: str | list) -> list:
-        if isinstance(v, list):
-            return v
-        if isinstance(v, str):
-            # Handle JSON array format: '["a","b"]'
-            if v.strip().startswith("["):
-                import json
-                try:
-                    return json.loads(v)
-                except Exception:
-                    pass
-            # Handle comma-separated format: "a,b,c"
-            return [item.strip() for item in v.split(",") if item.strip()]
-        return v
-    
+    @property
+    def allowed_origins(self) -> list[str]:
+        return [o.strip() for o in self.allowed_origins_raw.split(",") if o.strip()]
+
+    @property
+    def allowed_hosts(self) -> list[str]:
+        return [h.strip() for h in self.allowed_hosts_raw.split(",") if h.strip()]
+        
     resume_link: str = Field(
-        default="",
-        validation_alias="RESUME_LINK",
-    )
+            default="",
+            validation_alias="RESUME_LINK",
+        )
 
     # ── Email provider ─────────────────────────────────────────────────
     email_provider: EmailProvider = Field(
