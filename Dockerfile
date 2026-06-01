@@ -6,14 +6,15 @@ WORKDIR /backend
 COPY app/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Create non-root user
-RUN adduser --disabled-password --gecos "" appuser
-
-# Create logs directory and give ownership to appuser BEFORE switching user
-RUN mkdir -p /backend/logs && chown -R appuser:appuser /backend
+# Create non-root user and logs directory
+RUN adduser --disabled-password --gecos "" appuser && \
+    mkdir -p /backend/logs
 
 # Copy application code
 COPY app/ ./app/
+
+# Give appuser ownership of everything — must be AFTER COPY
+RUN chown -R appuser:appuser /backend
 
 # Switch to non-root user
 USER appuser
