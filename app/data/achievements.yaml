@@ -1,19 +1,94 @@
-# Certifications and Achievements
+# Achievements — full data for CircularGallery
+# borderColor and gradient control the card appearance
+# url links to the credential
 
 - id: "1"
-  title: CCNA Certifications
+  title: CCNA Introduction to Networks
+  image: /badges/cisco1.svg
+  borderColor: "#7855f7"
+  gradient: linear-gradient(135deg, #7855f7, #33ccff)
+  url: https://www.credly.com/badges/6d7f9673-6214-4ae8-b4b9-ca2319ea3ca9/public_url
 
 - id: "2"
-  title: Cybersecurity Essentials
+  title: CCNA Routing Essentials
+  image: /badges/cisco2.svg
+  borderColor: "#7855f7"
+  gradient: linear-gradient(135deg, #7855f7, #ff66cc)
+  url: https://www.credly.com/badges/c2ab2494-8744-4b18-9ea9-cb143d0c520e/public_url
 
 - id: "3"
-  title: Gen AI Apps
+  title: CCNA Enterprise Networking
+  image: /badges/cisco3.svg
+  borderColor: "#7855f7"
+  gradient: linear-gradient(135deg, #7855f7, #00cc99)
+  url: https://www.credly.com/badges/ff73544f-cfb7-49f9-b347-7be4cda5bba4/public_url
 
 - id: "4"
-  title: Prompt Design
+  title: Networking Essentials
+  image: /badges/cisco4.svg
+  borderColor: "#7855f7"
+  gradient: linear-gradient(135deg, #7855f7, #33ccff)
+  url: https://www.credly.com/badges/5ca0aecb-7306-4f70-abe2-2c5e25f0f4ee/public_url
 
 - id: "5"
-  title: IBM Cybersecurity
+  title: Cyber Security Essentials
+  image: /badges/cisco5.svg
+  borderColor: "#7855f7"
+  gradient: linear-gradient(135deg, #7855f7, #ff66cc)
+  url: https://www.credly.com/badges/77e20ac4-9e8c-4718-a669-0dade8439b00/public_url
 
 - id: "6"
+  title: Intro to Cybersecurity
+  image: /badges/cisco6.svg
+  borderColor: "#7855f7"
+  gradient: linear-gradient(135deg, #7855f7, #00cc99)
+  url: https://www.credly.com/badges/cbeccd74-411e-4584-aeb7-5b6978350436/public_url
+
+- id: "7"
+  title: Intro To IoT
+  image: /badges/cisco7.svg
+  borderColor: "#7855f7"
+  gradient: linear-gradient(135deg, #7855f7, #33ccff)
+  url: https://www.credly.com/badges/f2646e14-ecb6-4246-a3f0-f85a4c9ceee1/public_url
+
+- id: "8"
+  title: Gen AI Apps
+  image: /badges/gcp1.svg
+  borderColor: "#7855f7"
+  gradient: linear-gradient(135deg, #7855f7, #ff66cc)
+  url: https://www.credly.com/badges/9d708d7c-ce24-4ebf-8271-83b553863aea/public_url
+
+- id: "9"
+  title: Multimodal RAG
+  image: /badges/gcp2.svg
+  borderColor: "#7855f7"
+  gradient: linear-gradient(135deg, #7855f7, #00cc99)
+  url: https://www.credly.com/badges/d865aa5f-865f-49be-afe6-e8634e90d156/public_url
+
+- id: "10"
+  title: Prompt Design
+  image: /badges/gcp3.svg
+  borderColor: "#7855f7"
+  gradient: linear-gradient(135deg, #7855f7, #33ccff)
+  url: https://www.credly.com/badges/7ae116c4-ca9c-4744-ba11-1c914f7fc651/public_url
+
+- id: "11"
+  title: IBM Cybersecurity
+  image: /badges/Ibm.svg
+  borderColor: "#7855f7"
+  gradient: linear-gradient(135deg, #7855f7, #ff66cc)
+  url: https://www.credly.com/badges/2c8948c3-6b39-45a7-9067-a251ea849be4/public_url
+
+- id: "12"
   title: LeetCode 50 Days
+  image: /badges/Leetcode.svg
+  borderColor: "#7855f7"
+  gradient: linear-gradient(135deg, #7855f7, #33ccff)
+  url: https://leetcode.com/medal/
+
+- id: "13"
+  title: LeetCode 100 Days
+  image: /badges/leetcode100.svg
+  borderColor: "#7855f7"
+  gradient: linear-gradient(135deg, #7855f7, #33ccff)
+  url: https://leetcode.com/medal/
