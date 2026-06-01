@@ -23,7 +23,8 @@ Admin endpoints:
 
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Body
+from typing import Any
 
 from app.router.admin_router import verify_token
 from app.utils.portfolio_store import (
@@ -202,10 +203,11 @@ def get_about():
 
 # ── Admin endpoints ────────────────────────────────────────────────────────
 
+
 @router.put("/admin/portfolio/{section}")
 def replace_section(
     section: str,
-    data: dict | list,
+    data: Any = Body(...),                # ← accepts any JSON — dict or list
     username: str = Depends(verify_token),
 ):
     """
