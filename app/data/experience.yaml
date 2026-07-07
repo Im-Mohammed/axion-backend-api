@@ -1,24 +1,17 @@
 - id: "1"
-  role: Software Developer
+  role: AI Developer
   company: Caalm-ai
   location: Remote
-  period: Aug 2025 – Present
+  period: June 2025 – June 2026
   description: >
-    At Caalm.ai, I built and scaled backend systems that power intelligent
-    document workflows from OCR and classification to semantic search and
-    metadata extraction. I worked across cloud and on-prem environments,
-    using Docker, Azure Blob Storage, and Azure AI Document Intelligence
-    to deploy flexible, reliable services. I also developed RAG applications
-    with Melvis as a vector database, enabling smarter, context-aware responses.
-    My backend handled asynchronous tasks with Redis and Celery, supported
-    rollback-safe versioning, and followed modular service contracts to keep
-    everything maintainable and audit-friendly.
+    At Caalm.ai, I build AI-powered backend applications and scalable services using FastAPI, Python, and Azure. I developed a multi-agent document intelligence platform with OCR, document classification, metadata extraction, summarization, and multilingual RAG using Milvus and Azure AI Search. I also built real-time AI applications with Celery, Redis, WebSockets, and Azure Speech Services, ensuring reliable and scalable processing. In addition, I developed an AI-powered candidate evaluation platform with configurable scoring, hybrid skill matching, and explainable results. My focus is on building production-ready AI systems that are scalable, maintainable, and easy to deploy across cloud and on-premises environments.
+
 
 - id: "2"
-  role: AI System Developer
+  role: AI Developer
   company: Freelance Project
   location: Remote
-  period: May 2025 – July 2025
+  period: March 2025 – May 2025
   description: >
     Built an intelligent automation agent to resolve network issues triggered
     by SolarWinds alerts and Freshservice tickets, reducing manual triage and
@@ -33,7 +26,7 @@
   role: AI Application Developer
   company: MindSYNC
   location: Remote
-  period: Mar 2025 – April 2025
+  period: Dec 2024 – Feb 2025
   description: >
     Built MindSync, an emotion-adaptive learning platform that personalizes
     quiz difficulty and feedback based on real-time facial expressions.
