@@ -90,7 +90,7 @@ class Settings(BaseSettings):
 
 # New — store as plain string, expose as list via property
     allowed_origins_raw: str = Field(
-        default="https://www.mohammed-karab.rest",
+        default="https://www.mohammedkarab.rest",
         validation_alias="ALLOWED_ORIGINS",
     )
     allowed_hosts_raw: str = Field(
