@@ -94,7 +94,7 @@ class Settings(BaseSettings):
         validation_alias="ALLOWED_ORIGINS",
     )
     allowed_hosts_raw: str = Field(
-        default="mohammed-karab.rest,www.mohammed-karab.rest,localhost",
+        default="mohammedkarab.rest,www.mohammedkarab.rest,localhost",
         validation_alias="ALLOWED_HOSTS",
     )
 
